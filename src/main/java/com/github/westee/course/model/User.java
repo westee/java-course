@@ -1,13 +1,15 @@
 package com.github.westee.course.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "user")
+@Table(name = "user", schema = "public")
+@EntityListeners(AuditingEntityListener.class)
 public class User {
     private Integer id;
     private String username;
@@ -15,9 +17,10 @@ public class User {
     private String email;
     private Date created_at;
     private Date updated_at;
-    private String status;
+    private Status status = Status.OK;
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     public Integer getId() {
         return id;
@@ -55,6 +58,7 @@ public class User {
     }
 
     @Column(name = "created_at")
+    @CreatedDate
     public Date getCreated_at() {
         return created_at;
     }
@@ -64,6 +68,7 @@ public class User {
     }
 
     @Column(name = "updated_at")
+    @LastModifiedDate
     public Date getUpdated_at() {
         return updated_at;
     }
@@ -73,11 +78,12 @@ public class User {
     }
 
     @Column(name = "status")
-    public String getStatus() {
+    @Enumerated(EnumType.STRING)
+    public Status getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Status status) {
         this.status = status;
     }
 }
