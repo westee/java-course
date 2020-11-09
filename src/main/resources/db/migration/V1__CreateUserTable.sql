@@ -2,7 +2,6 @@ create table "user" (
     id serial primary key,
     username varchar(20) unique not null,
     encrypted_password varchar(20) not null,
-    email varchar(255)  not null,
     created_at timestamp not null default now(),
     updated_at timestamp not null default now(),
     status varchar(10) not null default 'OK'
@@ -29,9 +28,9 @@ create table user_role (
     status varchar(10) not null default 'OK'
 );
 
-insert into "user" (id, username, encrypted_password, email) values (1, '学生', '123456', '123@qq.com');
-insert into "user" (id, username, encrypted_password, email) values (2, '老师', '123456', '123@qq.com');
-insert into "user" (id, username, encrypted_password, email) values (3, '管理员', '123456', '123@qq.com');
+insert into "user" (id, username, encrypted_password) values (1, '学生', 123456);
+insert into "user" (id, username, encrypted_password) values (2, '老师',123456);
+insert into "user" (id, username, encrypted_password) values (3, '管理员',123456);
 insert into user_role (id, user_id, role_id) values (1, 1, 1);
 insert into user_role (id, user_id, role_id) values (2, 2, 2);
 insert into user_role (id, user_id, role_id) values (3, 3, 3);

@@ -8,7 +8,6 @@ import java.util.List;
 public class User extends BaseEntity{
     private String username;
     private String encrypted_password;
-    private String email;
 
     @Column(name = "username")
     public String getUsername() {
@@ -26,15 +25,6 @@ public class User extends BaseEntity{
 
     public void setEncrypted_password(String encrypted_password) {
         this.encrypted_password = encrypted_password;
-    }
-
-    @Column(name = "email")
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     private List<Role> roles;
