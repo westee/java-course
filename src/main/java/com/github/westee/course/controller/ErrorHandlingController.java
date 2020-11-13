@@ -12,11 +12,12 @@ import java.util.Map;
 
 @ControllerAdvice
 public class ErrorHandlingController {
-    ObjectMapper objectMapper;
+    ObjectMapper objectMapper = new ObjectMapper();
 
     @ExceptionHandler({HttpException.class})
     public void handlerError(HttpServletResponse response, HttpException ex) throws Exception {
         response.setStatus(ex.getStatusCode());
+        response.setHeader("content-type", "application/json;charset=UTF-8");
         Map<String, Object> jsonObject = new HashMap<>();
         jsonObject.put("message", ex.getMessage());
         response.getOutputStream().write(objectMapper.writeValueAsBytes(jsonObject));

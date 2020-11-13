@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 public class Config {
     public static class UserContext{
 
-        private static ThreadLocal<User> currentUser;
+        private static ThreadLocal<User> currentUser = new ThreadLocal<>();
 
         public static User getCurrentUser() {
             return currentUser.get();
