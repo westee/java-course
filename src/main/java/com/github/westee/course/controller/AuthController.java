@@ -2,6 +2,7 @@ package com.github.westee.course.controller;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.github.westee.course.configuration.Config;
+import com.github.westee.course.dao.SessionDao;
 import com.github.westee.course.dao.UserRepository;
 import com.github.westee.course.model.HttpException;
 import com.github.westee.course.model.Session;
@@ -10,25 +11,33 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
+import java.util.UUID;
+
+import static com.github.westee.course.configuration.Config.UserInterceptor.COOKIE_NAME;
 
 
 @RestController
 @RequestMapping("/api/v1")
 public class AuthController {
+    private BCrypt.Verifyer verifyer = BCrypt.verifyer();
+
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    SessionDao sessionDao;
 
     @GetMapping("/session")
-    public Session authStatus(){
-         User currentUser = Config.UserContext.getCurrentUser();
-         if(currentUser == null){
-           throw new HttpException(401, "未认证");
-         } else {
-             Session session = new Session();
-             session.setUser(currentUser);
+    public Session authStatus() {
+        User currentUser = Config.UserContext.getCurrentUser();
+        if (currentUser == null) {
+            throw new HttpException(401, "未认证");
+        } else {
+            Session session = new Session();
+            session.setUser(currentUser);
             return session;
-         }
+        }
     }
 
     @PostMapping("/user")
@@ -56,5 +65,30 @@ public class AuthController {
         }
         response.setStatus(201);
         return user;
+    }
+
+    @PostMapping("/session")
+    public User login(@RequestParam("username") String username,
+                      @RequestParam("password") String password,
+                      HttpServletResponse response) {
+        User user = userRepository.findUsersByUsername(username);
+        if (user == null) {
+            throw new HttpException(401, "登录失败！");
+        } else {
+            if (verifyer.verify(password.toCharArray(), user.getEncrypted_password()).verified) {
+                String cookie = UUID.randomUUID().toString();
+
+                Session session = new Session();
+                session.setCookie(cookie);
+                session.setUser(user);
+                sessionDao.save(session);
+
+
+                response.addCookie(new Cookie(COOKIE_NAME, cookie));
+                return user;
+            } else {
+                throw new HttpException(401, "登录失败！");
+            }
+        }
     }
 }

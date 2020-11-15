@@ -66,13 +66,25 @@ public class AuthIntegrationTest {
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        System.out.println(response.statusCode());
-        System.out.println(response.body());
-
         User responseUser = objectMapper.readValue(response.body(), User.class);
 
         Assertions.assertEquals(201, response.statusCode());
         Assertions.assertEquals("aaaaaa", responseUser.getUsername());
+
+
+        request = HttpRequest.newBuilder()
+                .header("Accept", "application/json")
+                .header("Content-type", APPLICATION_FORM_URLENCODED_VALUE)
+                .uri(URI.create("http://localhost:" + getPort() + "/api/v1/session" ))
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        String cookie = response.headers().firstValue("Set-Cookie").get();
+
+        responseUser = objectMapper.readValue(response.body(), User.class);
+
+        Assertions.assertEquals(200, response.statusCode());
+        Assertions.assertNotNull(cookie);
     }
 
     public void getErrorIfUsernameExist() {
