@@ -1,10 +1,12 @@
 package com.github.westee.course.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import java.util.List;
 
 @Entity
-@Table(name = "user", schema = "public")
+@Table(name = "users", schema = "public")
 public class User extends BaseEntity{
     private String username;
     private String encrypted_password;
@@ -19,6 +21,7 @@ public class User extends BaseEntity{
     }
 
     @Column(name = "encrypted_password")
+    @JsonIgnore
     public String getEncrypted_password() {
         return encrypted_password;
     }
@@ -29,7 +32,7 @@ public class User extends BaseEntity{
 
     private List<Role> roles;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_role",
             joinColumns = @JoinColumn(name = "user_id"),

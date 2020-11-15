@@ -72,7 +72,7 @@ public class AuthIntegrationTest {
         User responseUser = objectMapper.readValue(response.body(), User.class);
 
         Assertions.assertEquals(201, response.statusCode());
-        Assertions.assertEquals("aaa", responseUser.getUsername());
+        Assertions.assertEquals("aaaaaa", responseUser.getUsername());
     }
 
     public void getErrorIfUsernameExist() {

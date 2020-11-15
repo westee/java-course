@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
+
 
 @RestController
 @RequestMapping("/api/v1")
@@ -31,7 +33,8 @@ public class AuthController {
 
     @PostMapping("/user")
     public User register(@RequestParam("username") String username,
-                         @RequestParam("password") String password) {
+                         @RequestParam("password") String password,
+                         HttpServletResponse response) {
         if (StringUtils.isEmpty(username) || username.length() > 20 || username.length() < 6) {
             throw new HttpException(400, "用户名必须在6到20之间");
         }
@@ -49,8 +52,9 @@ public class AuthController {
             userRepository.save(user);
         } catch (Throwable e) {
             // 如果用户名已经被注册
-            throw new HttpException(409, "用户名已经被注册");
+            throw new HttpException(409, e.getMessage());
         }
+        response.setStatus(201);
         return user;
     }
 }
