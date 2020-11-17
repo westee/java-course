@@ -12,7 +12,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.github.westee.course.configuration.Config.UserInterceptor.COOKIE_NAME;
@@ -83,12 +85,24 @@ public class AuthController {
                 session.setUser(user);
                 sessionDao.save(session);
 
-
                 response.addCookie(new Cookie(COOKIE_NAME, cookie));
                 return user;
             } else {
                 throw new HttpException(401, "登录失败！");
             }
         }
+    }
+
+    @DeleteMapping("/session")
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+        if (Config.UserContext.getCurrentUser() == null) {
+            throw new HttpException(401, "未登录");
+        }
+
+        Config.getCookie(request).ifPresent(sessionDao::deleteByCookie);
+        Cookie cookie = new Cookie(COOKIE_NAME, null);
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+        response.setStatus(204);
     }
 }
