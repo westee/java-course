@@ -20,8 +20,8 @@ import static com.github.westee.course.configuration.Config.UserInterceptor.COOK
 
 @Configuration
 public class Config implements WebMvcConfigurer {
-   @Autowired
-   SessionDao sessionDao;
+    @Autowired
+    SessionDao sessionDao;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
@@ -42,7 +42,7 @@ public class Config implements WebMvcConfigurer {
     }
 
     public static Optional<String> getCookie(HttpServletRequest request) {
-        if(request.getCookies() == null){
+        if (request.getCookies() == null) {
             return Optional.empty();
         }
         Cookie[] cookies = request.getCookies();
@@ -54,8 +54,7 @@ public class Config implements WebMvcConfigurer {
     public static class UserInterceptor implements HandlerInterceptor {
         public static final String COOKIE_NAME = "SUN_SESSION_ID";
 
-        @Autowired
-        private SessionDao sessionDao;
+        SessionDao sessionDao;
 
         public UserInterceptor(SessionDao sessionDao) {
             this.sessionDao = sessionDao;

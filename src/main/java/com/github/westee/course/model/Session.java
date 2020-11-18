@@ -5,18 +5,18 @@ import javax.persistence.*;
 @Entity
 @Table(name = "session", schema = "public")
 public class Session {
-    private String id;
+    private Integer id;
     private String cookie;
     private User user;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    public String getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(Integer id) {
         this.id = id;
     }
     @Column(name = "cookie")
