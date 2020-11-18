@@ -4,8 +4,11 @@ import com.github.westee.course.dao.SessionDao;
 import com.github.westee.course.model.Session;
 import com.github.westee.course.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -16,7 +19,15 @@ import java.util.stream.Stream;
 import static com.github.westee.course.configuration.Config.UserInterceptor.COOKIE_NAME;
 
 @Configuration
-public class Config {
+public class Config implements WebMvcConfigurer {
+   @Autowired
+   SessionDao sessionDao;
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new UserInterceptor(sessionDao));
+    }
+
     public static class UserContext {
 
         private static ThreadLocal<User> currentUser = new ThreadLocal<>();
@@ -31,6 +42,9 @@ public class Config {
     }
 
     public static Optional<String> getCookie(HttpServletRequest request) {
+        if(request.getCookies() == null){
+            return Optional.empty();
+        }
         Cookie[] cookies = request.getCookies();
         return Stream.of(cookies).filter(cookie -> cookie.getName().equals(COOKIE_NAME))
                 .map(Cookie::getValue)
@@ -42,6 +56,10 @@ public class Config {
 
         @Autowired
         private SessionDao sessionDao;
+
+        public UserInterceptor(SessionDao sessionDao) {
+            this.sessionDao = sessionDao;
+        }
 
         @Override
         public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {

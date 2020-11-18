@@ -1,6 +1,7 @@
 package com.github.westee.course;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.westee.course.model.Session;
 import com.github.westee.course.model.User;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.configuration.ClassicConfiguration;
@@ -80,9 +81,10 @@ public class AuthIntegrationTest {
         return client.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
-    private HttpResponse<String> delete(String url) throws IOException, InterruptedException {
+    private HttpResponse<String> delete(String url, String cookie) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .header("Accept", APPLICATION_JSON_VALUE)
+                .header("Cookie", cookie)
                 .uri(URI.create("http://localhost:" + getPort() + "/api/v1" + url))
                 .DELETE()
                 .build();
@@ -91,7 +93,6 @@ public class AuthIntegrationTest {
 
     @Test
     public void registerLoginLogout() throws IOException, InterruptedException {
-        HttpClient client = HttpClient.newHttpClient();
         String body = "username=aaaaaa&password=bbbbbb";
 
         // 注册
@@ -107,12 +108,13 @@ public class AuthIntegrationTest {
         assertEquals(responseUser.getUsername(), "aaaaaa");
 
         String cookie = response.headers().firstValue("Set-Cookie").get();
+
         response = get("/session", cookie);
-
         assertEquals(200, response.statusCode());
-        assertNotNull(cookie);
+        Session session = objectMapper.readValue(response.body(), Session.class);
+        assertEquals("aaaaaa", session.getUser().getUsername());
 
-        response = delete("/session");
+        response = delete("/session", cookie);
         assertEquals(204, response.statusCode());
 
         response = get("/session", cookie);

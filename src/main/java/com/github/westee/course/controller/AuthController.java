@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Optional;
+import javax.transaction.Transactional;
 import java.util.UUID;
 
 import static com.github.westee.course.configuration.Config.UserInterceptor.COOKIE_NAME;
@@ -93,14 +93,16 @@ public class AuthController {
         }
     }
 
+    @Transactional
     @DeleteMapping("/session")
-    public void logout(HttpServletRequest request, HttpServletResponse response) {
+    public void logout(HttpServletRequest request,
+                       HttpServletResponse response) {
         if (Config.UserContext.getCurrentUser() == null) {
             throw new HttpException(401, "未登录");
         }
 
         Config.getCookie(request).ifPresent(sessionDao::deleteByCookie);
-        Cookie cookie = new Cookie(COOKIE_NAME, null);
+        Cookie cookie = new Cookie(COOKIE_NAME, "");
         cookie.setMaxAge(0);
         response.addCookie(cookie);
         response.setStatus(204);
