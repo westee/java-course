@@ -1,6 +1,7 @@
 package com.github.westee.course;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.westee.course.configuration.Config;
 import com.github.westee.course.model.Session;
 import com.github.westee.course.model.User;
 import org.flywaydb.core.Flyway;
@@ -23,7 +24,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED_VALUE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -119,6 +119,18 @@ public class AuthIntegrationTest {
 
         response = get("/session", cookie);
         assertEquals(401, response.statusCode());
+    }
+
+    @Test
+    public void onlyAdminCanSeeAllUsers() throws IOException, InterruptedException {
+        HttpResponse<String> response = get("/admin/user", Config.UserInterceptor.COOKIE_NAME+"=test_user_3");
+        assertEquals(200, response.statusCode());
+    }
+
+    @Test
+    public void notAdminCanNotSeeAllUsers() throws IOException, InterruptedException {
+        HttpResponse<String> response = get("/admin/user", Config.UserInterceptor.COOKIE_NAME +"=test_user_1");
+        assertEquals(403, response.statusCode());
     }
 
     public void getErrorIfUsernameExist() {

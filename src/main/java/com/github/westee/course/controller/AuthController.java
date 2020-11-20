@@ -1,9 +1,10 @@
 package com.github.westee.course.controller;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
+import com.github.westee.course.annotation.UserRoleManageService;
 import com.github.westee.course.configuration.Config;
 import com.github.westee.course.dao.SessionDao;
-import com.github.westee.course.dao.UserRepository;
+import com.github.westee.course.dao.UserDao;
 import com.github.westee.course.model.HttpException;
 import com.github.westee.course.model.Session;
 import com.github.westee.course.model.User;
@@ -15,6 +16,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
+import java.util.List;
 import java.util.UUID;
 
 import static com.github.westee.course.configuration.Config.UserInterceptor.COOKIE_NAME;
@@ -26,7 +28,7 @@ public class AuthController {
     private BCrypt.Verifyer verifyer = BCrypt.verifyer();
 
     @Autowired
-    UserRepository userRepository;
+    UserDao userDao;
     @Autowired
     SessionDao sessionDao;
 
@@ -60,7 +62,7 @@ public class AuthController {
         user.setEncrypted_password(BCrypt.withDefaults()
                 .hashToString(12, password.toCharArray()));
         try {
-            userRepository.save(user);
+            userDao.save(user);
         } catch (Throwable e) {
             // 如果用户名已经被注册
             throw new HttpException(409, e.getMessage());
@@ -73,7 +75,7 @@ public class AuthController {
     public User login(@RequestParam("username") String username,
                       @RequestParam("password") String password,
                       HttpServletResponse response) {
-        User user = userRepository.findUsersByUsername(username);
+        User user = userDao.findUsersByUsername(username);
         if (user == null) {
             throw new HttpException(401, "登录失败！");
         } else {
@@ -106,5 +108,13 @@ public class AuthController {
         cookie.setMaxAge(0);
         response.addCookie(cookie);
         response.setStatus(204);
+    }
+
+    @Autowired
+    UserRoleManageService userRoleManageService;
+
+    @RequestMapping("/admin/user")
+    public List<User> getAllUsers(){
+        return userRoleManageService.getAllUsers();
     }
 }
