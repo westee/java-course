@@ -1,7 +1,9 @@
 package com.github.westee.course.controller;
 
 import com.aliyun.oss.ClientConfiguration;
+import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClient;
+import com.aliyun.oss.OSSClientBuilder;
 import com.aliyun.oss.common.auth.CredentialsProvider;
 import com.aliyun.oss.common.auth.DefaultCredentialProvider;
 import com.aliyun.oss.common.utils.BinaryUtil;
@@ -12,12 +14,34 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.sql.Date;
+import java.util.Date;
 
 @RestController("/api/v1")
 @RequestMapping("/api/v1")
 public class VideoController {
+    @GetMapping("/course/{id}")
+    public String getVideos(@PathVariable("id") Integer courseId) {
+        // Endpoint以杭州为例，其它Region请按实际情况填写。
+        String endpoint = "http://oss-cn-qingdao.aliyuncs.com";
+        // 阿里云主账号AccessKey拥有所有API的访问权限，风险很高。强烈建议您创建并使用RAM账号进行API访问或日常运维，请登录RAM控制台创建RAM账号。
+        String accessKeyId = "<yourAccessKeyId>";
+        String accessKeySecret = "<yourAccessKeySecret>";
+        String bucketName = "<yourBucketName>";
+        String objectName = "<yourObjectName>";
+
+        // 创建OSSClient实例。
+        OSS ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
+
+        // 设置URL过期时间为1小时。
+        Date expiration = new Date(new Date().getTime() + 3600 * 1000);
+        // 生成以GET方法访问的签名URL，访客可以直接通过浏览器访问相关内容。
+        URL url = ossClient.generatePresignedUrl(bucketName, objectName, expiration);
+
+        return "<video href="+url+"><video>" ;
+    }
+
     @GetMapping("/course/{id}/token")
     public Token getToken(@PathVariable("id") Integer courseId) {
         String accessKeyId = ""; // 请填写您的AccessKeyId。
@@ -50,7 +74,7 @@ public class VideoController {
             token.setSignature(postSignature);
             token.setDir(dir);
             token.setHost(host);
-            token.setExpire(expireEndTimeMS/1000);
+            token.setExpire(expireEndTimeMS / 1000);
             return token;
         } catch (Exception e) {
             // Assert.fail(e.getMessage());
