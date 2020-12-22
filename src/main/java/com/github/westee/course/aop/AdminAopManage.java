@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AdminAopManage {
     @Around("@annotation(com.github.westee.course.annotation.Admin)")
-    public Object checkPermission(ProceedingJoinPoint joinPoint) throws Throwable {
+    public Object checkAdmin(ProceedingJoinPoint joinPoint) throws Throwable {
         User currentUser = Config.UserContext.getCurrentUser();
 
         if (currentUser.getRoles().stream().anyMatch(role -> "管理员".equals(role.getName())) ) {
@@ -24,16 +24,16 @@ public class AdminAopManage {
 
     }
 
-//    @Around("@annotation(com.github.westee.course.annotation.PermissionRequired)")
-//    public Object checkPermission(ProceedingJoinPoint joinPoint) throws Throwable {
-//        User currentUser = Config.UserContext.getCurrentUser();
-//        if (currentUser == null) {
-//            throw new HttpException(401, "没有登录！");
-//        } else if (currentUser.getRoles().stream().anyMatch(role -> "管理员".equals(role.getName()))) {
-//            // 检查当前用户是否有当前方法要求的角色
-//            return joinPoint.proceed();
-//        } else {
-//            throw new HttpException(403, "没有权限！");
-//        }
-//    }
+    @Around("@annotation(com.github.westee.course.annotation.PermissionRequired)")
+    public Object checkPermission(ProceedingJoinPoint joinPoint) throws Throwable {
+        User currentUser = Config.UserContext.getCurrentUser();
+        if (currentUser == null) {
+            throw new HttpException(401, "没有登录！");
+        } else if (currentUser.getRoles().stream().anyMatch(role -> "管理员".equals(role.getName()))) {
+            // 检查当前用户是否有当前方法要求的角色
+            return joinPoint.proceed();
+        } else {
+            throw new HttpException(403, "没有权限！");
+        }
+    }
 }
