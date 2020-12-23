@@ -1,5 +1,8 @@
 package com.github.westee.course;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.github.westee.course.model.PageResponse;
+import com.github.westee.course.model.User;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -27,7 +30,14 @@ public class UserIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void adminCanSearchUser() {
+    public void adminCanSearchUsers() throws IOException, InterruptedException {
+        var body = get("/user?pageSize=1&pageNum=2&orderBy=id&orderType=asc", adminUserCookie).body();
+        PageResponse<User> userPageResponse = objectMapper.readValue(body, new TypeReference<>() {});
+
+        assertEquals(2,userPageResponse.getPageNum());
+        assertEquals(1,userPageResponse.getPageSize());
+        assertEquals(3,userPageResponse.getTotalPage());
+        assertEquals("老师",userPageResponse.getData().get(0).getUsername());
     }
 
     @Test
