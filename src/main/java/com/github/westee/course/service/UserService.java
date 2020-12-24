@@ -2,10 +2,7 @@ package com.github.westee.course.service;
 
 import com.github.westee.course.annotation.Admin;
 import com.github.westee.course.dao.UserDao;
-import com.github.westee.course.model.HttpException;
-import com.github.westee.course.model.PageResponse;
-import com.github.westee.course.model.RoleDao;
-import com.github.westee.course.model.User;
+import com.github.westee.course.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -13,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+
+import java.util.stream.Collectors;
 
 
 @Service
@@ -28,20 +27,34 @@ public class UserService {
 
     @Admin
     public User updateUser(Integer id, User user) {
-        return null;
+        var nameToRoleMap = roleDao.findAll().stream().collect(
+                Collectors.toMap(Role::getName, r->r)
+        );
+
+        try{
+            user.getRoles().forEach(role -> role.setId(
+                    nameToRoleMap.get(role.getName()).getId()
+            ));
+        } catch (Exception e){
+            throw new HttpException(400, "角色有误");
+        }
+        User userInDataBase = getUser(id);
+        userInDataBase.setRoles(user.getRoles());
+        userDao.save(userInDataBase);
+        return userInDataBase;
     }
 
     @Admin
     public PageResponse<User> getAllUsers(String search, Integer pageSize, Integer pageNum, String orderBy,
                                     String orderType) {
         if (orderBy != null && orderType == null) {
-            orderType = "asc";
+            orderType = "Asc";
         }
         Pageable pageable = null;
         if (orderBy == null) {
-            pageable = PageRequest.of(pageNum, pageSize);
+            pageable = PageRequest.of(pageNum - 1, pageSize);
         } else {
-            pageable = PageRequest.of(pageNum, pageSize, Sort.by(Sort.Direction.fromString(orderType), orderBy));
+            pageable = PageRequest.of(pageNum -1, pageSize, Sort.by(Sort.Direction.fromString(orderType), orderBy));
         }
 
         if (StringUtils.isEmpty(search)) {

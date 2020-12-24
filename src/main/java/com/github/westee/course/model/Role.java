@@ -1,5 +1,7 @@
 package com.github.westee.course.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import java.util.Set;
 
@@ -19,6 +21,7 @@ public class Role extends BaseEntity {
 
     private Set<Permission> permissions;
 
+    @JsonIgnore
     @OneToMany
     @JoinTable(name = "permission",
                 joinColumns = @JoinColumn(name = "role_id"),
