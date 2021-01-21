@@ -5,68 +5,83 @@ import com.alipay.api.AlipayClient;
 import com.alipay.api.DefaultAlipayClient;
 import com.alipay.api.request.AlipayTradePagePayRequest;
 import com.github.westee.course.configuration.AlipayConfig;
+import com.github.westee.course.configuration.Config;
+import com.github.westee.course.dao.CourseDao;
+import com.github.westee.course.dao.CourseOrderDao;
+import com.github.westee.course.model.*;
+import com.github.westee.course.service.AlipayService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Optional;
+
 @RestController
 public class OrderController {
+    @Autowired
+    CourseOrderDao courseOrderDao;
+
+    @Autowired
+    CourseDao courseDao;
+
+    @Autowired
+    AlipayService alipayService;
+
     @GetMapping("/showPay")
     @ResponseBody
-    public String showPay(@RequestParam("courseId") Integer courseId) throws AlipayApiException {
-        //获得初始化的AlipayClient
-        AlipayClient alipayClient = new DefaultAlipayClient(
-                AlipayConfig.gatewayUrl,
-                AlipayConfig.app_id,
-                AlipayConfig.merchant_private_key,
-                "json",
-                AlipayConfig.charset,
-                AlipayConfig.alipay_public_key,
-                AlipayConfig.sign_type);
+    public String showPay(@RequestParam("courseId") Integer courseId, HttpServletResponse response) throws AlipayApiException, IOException {
+        User user = Config.UserContext.getCurrentUserOr401();
+        Optional<CourseOrder> order = courseOrderDao.findByCourseIdAndUserId(courseId, user.getId());
+        if (order.isEmpty()) {
+            Course course = courseDao.findById(courseId).orElseThrow(
+                    () -> new HttpException(404, "课程不存在: " + courseId)
+            );
+            CourseOrder newOrder = new CourseOrder();
+            newOrder.setPrice(course.getPrice());
+            newOrder.setStatus(OrderStatus.UNPAID);
+            newOrder.setCourse(course);
+            newOrder.setUser(user);
+            courseOrderDao.save(newOrder);
+            return alipayService.getPayPageHtml(newOrder);
+        } else {
+            if (order.get().getStatus() == OrderStatus.PAID) {
+                // 已经付过款，无需再次付款
+                response.sendRedirect("http://localhost:8080/api/v1/course/" + courseId);
+                return "";
+            } else {
+                return alipayService.getPayPageHtml(order.get());
+            }
+        }
+    }
 
-        //设置请求参数
-        AlipayTradePagePayRequest alipayRequest = new AlipayTradePagePayRequest();
-        alipayRequest.setReturnUrl(AlipayConfig.return_url);
-//        alipayRequest.setNotifyUrl(AlipayConfig.notify_url);
+    @GetMapping("/checkPay")
+    @ResponseBody
+    public void checkPay(
+            @RequestParam("orderId") Integer orderId,
+            @RequestParam("trade_no") String alipayTradeNo,
+            HttpServletResponse response
+    ) throws IOException, AlipayApiException {
+        User user = Config.UserContext.getCurrentUserOr401();
+        CourseOrder order = courseOrderDao.findById(orderId).orElseThrow(
+                () -> new HttpException(404, "Not found")
+        );
 
-        //商户订单号，商户网站订单系统中唯一订单号，必填
-        String out_trade_no = "test" + courseId;
-        System.out.println(courseId);
-        //付款金额，必填
-        String total_amount = "1";
-        //订单名称，必填
-        String subject = "旭东的第一个订单";
-        //商品描述，可空
-        String body = "";
+        if (!user.getId().equals(order.getUser().getId())) {
+            throw new HttpException(403, "Forbidden");
+        }
 
-        alipayRequest.setBizContent("{\"out_trade_no\":\"" + out_trade_no + "\","
-                + "\"total_amount\":\"" + total_amount + "\","
-                + "\"subject\":\"" + subject + "\","
-                + "\"body\":\"" + body + "\","
-                + "\"product_code\":\"FAST_INSTANT_TRADE_PAY\"}");
-
-        //若想给BizContent增加其他可选请求参数，以增加自定义超时时间参数timeout_express来举例说明
-        //alipayRequest.setBizContent("{\"out_trade_no\":\""+ out_trade_no +"\","
-        //		+ "\"total_amount\":\""+ total_amount +"\","
-        //		+ "\"subject\":\""+ subject +"\","
-        //		+ "\"body\":\""+ body +"\","
-        //		+ "\"timeout_express\":\"10m\","
-        //		+ "\"product_code\":\"FAST_INSTANT_TRADE_PAY\"}");
-        //请求参数可查阅【电脑网站支付的API文档-alipay.trade.page.pay-请求参数】章节
-
-        //请求
-        String result = alipayClient.pageExecute(alipayRequest).getBody();
-
-        //输出
-        return "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n" +
-                "<html>\n" +
-                "<head>\n" +
-                "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n" +
-                "<title>付款</title>\n" +
-                "</head>" + result +
-                "<body>\n" +
-                "</body>\n" +
-                "</html>";
+        if (order.getStatus() == OrderStatus.UNPAID) {
+            // 如果能从支付宝处查到交易记录，则将订单状态设置为PAID
+            String status = alipayService.checkOrderStatus(order, alipayTradeNo);
+            if ("TRADE_SUCCESS".equals(status)) {
+                order.setStatus(OrderStatus.PAID);
+                courseOrderDao.save(order);
+            }
+        }
+        response.sendRedirect("http://localhost:8080/api/v1/course/" + order.getCourse().getId());
     }
 }

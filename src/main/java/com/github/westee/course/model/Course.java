@@ -1,15 +1,20 @@
 package com.github.westee.course.model;
 
+import javax.persistence.*;
 import java.util.List;
 
-public class Course {
+@Entity
+@Table(name = "course", schema = "public")
+public class Course extends BaseStatusEntity{
     private String name;
     private String description;
-    private User teacher;
+    private String teacherName;
+    private String teacherDescription;
     private List<Video> videos;
     private Integer price;
     private boolean purchased;
 
+    @Column(name = "name")
     public String getName() {
         return name;
     }
@@ -18,6 +23,7 @@ public class Course {
         this.name = name;
     }
 
+    @Column(name = "description")
     public String getDescription() {
         return description;
     }
@@ -26,14 +32,28 @@ public class Course {
         this.description = description;
     }
 
-    public User getTeacher() {
-        return teacher;
+    @Column(name = "teacherName")
+    public String getTeacherName() {
+        return teacherName;
     }
 
-    public void setTeacher(User teacher) {
-        this.teacher = teacher;
+    public void setTeacherName(String teacherName) {
+        this.teacherName = teacherName;
     }
 
+    @Column(name = "teacherDescription")
+    public String getTeacherDescription() {
+        return teacherDescription;
+    }
+
+    public void setTeacherDescription(String teacherDescription) {
+        this.teacherDescription = teacherDescription;
+    }
+
+    @OneToMany
+    @JoinTable(name = "video",
+            joinColumns = @JoinColumn(name = "course_id"),
+            inverseJoinColumns = @JoinColumn(name = "id"))
     public List<Video> getVideos() {
         return videos;
     }
@@ -42,6 +62,7 @@ public class Course {
         this.videos = videos;
     }
 
+    @Column(name = "price")
     public Integer getPrice() {
         return price;
     }
@@ -50,6 +71,7 @@ public class Course {
         this.price = price;
     }
 
+    @Transient
     public boolean isPurchased() {
         return purchased;
     }

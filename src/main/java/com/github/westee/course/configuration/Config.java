@@ -1,6 +1,7 @@
 package com.github.westee.course.configuration;
 
 import com.github.westee.course.dao.SessionDao;
+import com.github.westee.course.model.HttpException;
 import com.github.westee.course.model.Session;
 import com.github.westee.course.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,14 @@ public class Config implements WebMvcConfigurer {
 
         public static void setCurrentUser(User currentUser) {
             UserContext.currentUser.set(currentUser);
+        }
+
+        public static User getCurrentUserOr401() {
+            User user = currentUser.get();
+            if (user == null) {
+                throw new HttpException(401, "Not login");
+            }
+            return user;
         }
     }
 
