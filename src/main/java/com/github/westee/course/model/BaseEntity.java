@@ -13,7 +13,6 @@ public class BaseEntity {
     private Integer id;
     private Date createdAt;
     private Date updatedAt;
-    private Status status = Status.OK;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,13 +44,5 @@ public class BaseEntity {
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
     }
-    @Column(name = "status")
-    @Enumerated(EnumType.STRING)
-    public Status getStatus() {
-        return status;
-    }
 
-    public void setStatus(Status status) {
-        this.status = status;
-    }
 }
